@@ -12,7 +12,7 @@ int touchLoopDelayCount = 0;
 int touchLoopDelayTimer = 5;
 
 // controlls the sensitivity increasing it makes it less sensitive
-long triggerThreshold = 1500;
+long triggerThreshold = 17500;
 
 // pins 2-8 are PWM, each controlling a MOSFET with 3 led clusters
 int clusterPins[]{2, 3, 4, 5, 6, 7, 8};
@@ -22,21 +22,21 @@ int clusterBrightness[]{50, 50, 50, 50, 50, 50, 50};
 int clusterBrightnessLeveling[]{50, 50, 50, 50, 50, 50, 50};
 int clusterCount = 7;
   // Modify these constants to change the behavior of the flame
-const int flameLoopDelay = 10; //ms, multiplied by the clusterDelay on each pin
+const int flameLoopDelay = 50; //ms, multiplied by the clusterDelay on each pin
   // 0-255 sets the minimum brightness
-const int minBrightness = 50; 
+const int minBrightness = 30; //default is 50 
   // 0-255 sets the maximum brightness
 const int maxBrightness = 255; 
   // milliseconds before a random value is pulled again controlls the fastest the light can flicker
-const int minimumDelay = 80;  
+const int minimumDelay = 30; // default is 80  
   //milliseconds before a random value is pulled again controlls the slowest the light can flicker
-const int maximumDelay = 190; 
+const int maximumDelay = 100; // default is 190
   // The loop forces all values greater than the maxBrightness back down the the minimum brightness,
   // increasing this value will cause the flame to rest at minBrightness for a higher percentage of the time,
   // but also increases the odds of having higher flame intensity
   // values >126 and < 255 will increasingly cause a gradual "build up" of the flame intensity (like a flickering candle)
   // values <126 will cause a slow, soft flicker of light, increasing the rarity of max brightness events (like coals/embers)
-const int oddsOfDimModifier = 130; //180
+const int oddsOfDimModifier = 180; //180
   // These value causes the flame to decay slower, values close to 100 will vary more from cycle to cycle
   // values close to zero will cause the brightness to randomize based on the oddsOfDimModifier more
   // a manual value may be set if desired, I found 80 to be a 'happy medium'
@@ -49,7 +49,7 @@ const int maxLeveling = 70;
 void setup() { 
   for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++){
     pinMode(clusterPins[clusterIndex], OUTPUT);
-    Serial.begin(115200);
+    Serial.begin(19200);
   }
   touchLoopDelayTimer = touchLoopDelayTimer * 1000 / flameLoopDelay;
 }
@@ -82,7 +82,6 @@ void touch_activation(){
   }
   else{
     touchVal = Sensor.capacitiveSensor(30);
-    Serial.println(touchVal);
     if (touchVal >= triggerThreshold){
       toggleBool = !toggleBool; 
       touchLoopDelayCount = touchLoopDelayTimer;
@@ -94,10 +93,19 @@ void touch_activation(){
 // calls touch sensor function and if touch has been triggered iterates over the clusterPins array, triggering the cluster_flame_effect over each index
 void loop() {
   touch_activation();
+  //Serial.println(touchVal);
   if (toggleBool == true){
     for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++){
-      cluster_flame_effect(clusterIndex);    
+      cluster_flame_effect(clusterIndex);
+      Serial.println(clusterIndex);
+      //Serial.println(clusterBrightness[clusterIndex]);    
+    }
+  }
+  else{
+    for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++){
+      analogWrite(clusterPins[clusterIndex], 0); 
     }
   }
   delay(flameLoopDelay);
+  
 }
